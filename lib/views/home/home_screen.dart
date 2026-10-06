@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../viewmodels/home_view_model.dart';
 import '../../widgets/category_card.dart';
 import '../../widgets/state_view.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -126,10 +127,24 @@ class _HomeScreenState extends State<HomeScreen> {
               color: AppColors.border,
             ),
           ),
-          child: const Icon(
-            Icons.notifications_none_rounded,
-            color: AppColors.textPrimary,
-          ),
+          child:  IconButton(
+            onPressed: () {
+             Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+            },
+            icon: Container(
+              height: 40,
+              width: 40,
+              decoration: const BoxDecoration(
+                color: AppColors.lightPrimary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.person_outline_rounded,
+                color: AppColors.primary,
+                size: 21,
+              ),
+            ),
+          )
         ),
       ],
     );

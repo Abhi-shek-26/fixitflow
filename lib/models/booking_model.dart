@@ -1,4 +1,4 @@
-import 'package:fixit_flow/models/service_model.dart';
+import 'service_model.dart';
 
 class BookingModel {
   final String id;
@@ -9,7 +9,6 @@ class BookingModel {
   final String phone;
   final String address;
 
-
   const BookingModel({
     required this.id,
     required this.service,
@@ -17,7 +16,6 @@ class BookingModel {
     required this.timeSlot,
     required this.customerName,
     required this.phone,
-    required this.address
-});
-
+    required this.address,
+  });
 }

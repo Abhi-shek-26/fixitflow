@@ -25,6 +25,12 @@ class BookingViewModel extends ChangeNotifier {
   BookingModel? _booking;
   BookingModel? get booking => _booking;
 
+  final List<BookingModel> _bookings = [];
+
+  List<BookingModel> get bookings {
+    return List.unmodifiable(_bookings);
+  }
+
   void setService(ServiceModel service) {
     _selectedService = service;
     notifyListeners();
@@ -48,6 +54,7 @@ class BookingViewModel extends ChangeNotifier {
     _customerName = name;
     _phone = phone;
     _address = address;
+
     notifyListeners();
   }
 
@@ -61,9 +68,11 @@ class BookingViewModel extends ChangeNotifier {
   }
 
   void createBooking() {
-    if (!canBook) return;
+    if (!canBook) {
+      return;
+    }
 
-    _booking = BookingModel(
+    final newBooking = BookingModel(
       id: 'FMT${DateTime.now().millisecondsSinceEpoch}',
       service: _selectedService!,
       date: _selectedDate!,
@@ -73,10 +82,17 @@ class BookingViewModel extends ChangeNotifier {
       address: _address.trim(),
     );
 
+    _booking = newBooking;
+
+    _bookings.insert(
+      0,
+      newBooking,
+    );
+
     notifyListeners();
   }
 
-  void clearBooking() {
+  void clearCurrentBooking() {
     _selectedService = null;
     _selectedDate = null;
     _selectedTimeSlot = null;
