@@ -19,12 +19,12 @@ class HomeViewModel extends ChangeNotifier{
   List<CategoryModel> _categories = [];
   List<CategoryModel> get categories => _categories;
 
-  String _errorMssg = '';
-  String get errorMssg => _errorMssg;
+  String _errorMessage = '';
+  String get errorMessage => _errorMessage;
 
   Future<void>loadCategories() async{
     _state = HomeState.loading;
-    _errorMssg = '';
+    _errorMessage = '';
     notifyListeners();
 
 
@@ -40,7 +40,7 @@ class HomeViewModel extends ChangeNotifier{
       }
     }catch (e){
       _state = HomeState.error;
-      _errorMssg = 'unable to load categories. Please try again later.';
+      _errorMessage = 'unable to load categories. Please try again later.';
     }
     notifyListeners();
   }

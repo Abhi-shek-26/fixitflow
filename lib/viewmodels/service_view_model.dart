@@ -59,8 +59,22 @@ class ServiceViewModel extends ChangeNotifier {
     _selectedCategoryId = categoryId;
 
     _services = _allServices
-        .where((service) => service.categoryId == categoryId)
+        .where(
+          (service) => service.categoryId == categoryId,
+    )
         .toList();
+
+    if (_services.isEmpty) {
+      _state = ServiceState.empty;
+    } else {
+      _state = ServiceState.loaded;
+    }
+
+    notifyListeners();
+  }
+
+  void setSearchResults(List<ServiceModel> results) {
+    _services = results;
 
     if (_services.isEmpty) {
       _state = ServiceState.empty;
