@@ -17,6 +17,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController =
+  TextEditingController();
+
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +29,25 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeViewModel>().loadCategories();
     });
+
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.trim().toLowerCase();
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
   }
 
   @override
@@ -48,6 +72,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                 sliver: SliverToBoxAdapter(
                   child: _buildBanner(),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                sliver: SliverToBoxAdapter(
+                  child: _buildSearchBar(),
                 ),
               ),
               SliverPadding(
@@ -127,9 +157,14 @@ class _HomeScreenState extends State<HomeScreen> {
               color: AppColors.border,
             ),
           ),
-          child:  IconButton(
+          child: IconButton(
             onPressed: () {
-             Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
+                ),
+              );
             },
             icon: Container(
               height: 40,
@@ -138,13 +173,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppColors.lightPrimary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.person_outline_rounded,
-                color: AppColors.primary,
-                size: 21,
+              child: ClipOval(
+                child: Image.network(
+                  'https://i.pravatar.cc/300?img=12',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.person_rounded,
+                      color: AppColors.primary,
+                      size: 25,
+                    );
+                  },
+                ),
               ),
             ),
-          )
+          ),
         ),
       ],
     );
@@ -206,6 +249,55 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(
+          color: AppColors.border,
+        ),
+      ),
+      child: TextField(
+        controller: _searchController,
+        textInputAction: TextInputAction.search,
+        style: const TextStyle(
+          fontSize: 14,
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          hintText: 'Search categories...',
+          hintStyle: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppColors.primary,
+            size: 23,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+            onPressed: _clearSearch,
+            icon: const Icon(
+              Icons.close_rounded,
+              size: 20,
+              color: AppColors.textSecondary,
+            ),
+          )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
       ),
     );
   }
@@ -276,26 +368,53 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
       case HomeState.loaded:
-        return SliverToBoxAdapter(
-          child: SizedBox(
-            height: 128,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: viewModel.categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                final category = viewModel.categories[index];
+        final categories = viewModel.categories.where((category) {
+          if (_searchQuery.isEmpty) {
+            return true;
+          }
 
-                return CategoryCard(
-                  category: category,
-                  onTap: () {
-                    context.push(
-                      '${AppRouter.serviceList}?categoryId=${category.id}&categoryName=${Uri.encodeComponent(category.name)}',
-                    );
-                  },
-                );
-              },
+          return category.name.toLowerCase().contains(_searchQuery) ||
+              category.id.toLowerCase().contains(_searchQuery);
+        }).toList();
+
+        if (categories.isEmpty) {
+          return SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: EmptyView(
+                title: 'No categories found',
+                message:
+                'Try searching with a different category name.',
+                icon: Icons.search_off_rounded,
+                onAction: _clearSearch,
+                actionText: 'Clear Search',
+              ),
             ),
+          );
+        }
+
+        return SliverGrid(
+          delegate: SliverChildBuilderDelegate(
+                (context, index) {
+              final category = categories[index];
+
+              return CategoryCard(
+                category: category,
+                onTap: () {
+                  context.push(
+                    '${AppRouter.serviceList}?categoryId=${category.id}&categoryName=${Uri.encodeComponent(category.name)}',
+                  );
+                },
+              );
+            },
+            childCount: categories.length,
+          ),
+          gridDelegate:
+          const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.15,
           ),
         );
     }
@@ -332,13 +451,15 @@ class _HomeScreenState extends State<HomeScreen> {
           _BenefitRow(
             icon: Icons.schedule_rounded,
             title: 'Flexible scheduling',
-            description: 'Choose a date and time that suits you.',
+            description:
+            'Choose a date and time that suits you.',
           ),
           SizedBox(height: 16),
           _BenefitRow(
             icon: Icons.price_check_rounded,
             title: 'Transparent pricing',
-            description: 'Know the service price before booking.',
+            description:
+            'Know the service price before booking.',
           ),
         ],
       ),
